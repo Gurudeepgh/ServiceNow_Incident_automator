@@ -1,16 +1,6 @@
-- name: Check if the target is reachable without using ping
-  hosts: localhost
+- name: Check if specific devices are reachable using Ansible ping module
+  hosts: 64.233.180.138, 192.0.43.10  # Replace with your target IPs
+  gather_facts: no
   tasks:
-    - name: Wait for the target to respond (port 80 as example)
-      ansible.builtin.wait_for:
-        host: "64.233.180.138"
-        port: 80
-        timeout: 10
-      register: reachability_result
-      ignore_errors: true
-
-    - name: Show the result
-      ansible.builtin.debug:
-        msg: "Target is {{ 'reachable' if reachability_result.state == 'started' else 'not reachable' }}"
-
-
+    - name: Ping specific devices
+      ansible.builtin.ping:
