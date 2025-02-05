@@ -10,7 +10,7 @@
       ignore_errors: true
 
     - name: Show the result
-      debug:
+      ansible.builtin.debug:
         msg: "Target is {{ 'reachable' if reachability_result.state == 'started' else 'not reachable' }}"
 
 
