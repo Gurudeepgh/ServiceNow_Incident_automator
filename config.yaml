@@ -38,9 +38,15 @@
       loop: "{{ targets }}"
       ignore_errors: yes
 
+    # - name: Print ping output
+    #   ansible.builtin.debug:
+    #     msg: "{{ ping_result.results | map(attribute='stdout') | list }}"
     - name: Print ping output
       ansible.builtin.debug:
-        msg: "{{ ping_result.results | map(attribute='stdout') | list }}"
+        msg: "{{ item.stdout }}"
+      loop: "{{ ping_result.results }}"
+      when: ping_result.results is defined
+
 
     - name: Run traceroute if ping fails
       ansible.builtin.command: >
