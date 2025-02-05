@@ -1,40 +1,89 @@
-- name: Ensure ping is installed and monitor connectivity
+---
+- name: Monitor network and log incidents in ServiceNow
   hosts: localhost
-  become: yes
-  gather_facts: yes
+  gather_facts: true
+  vars:
+    targets:
+      - "64.233.180.138"
+      - "192.0.43.10"
+    service_now:
+      instance: "dev262979.service-now.com"
+      username: "elt_agent"
+      password: "o@.CSQwgo^z6W!s6"
+      table: "incident"
+      impact: "3"
+      urgency: "3"
+      short_description: "Packet loss detected"
+
   tasks:
-    - name: Install ping on Debian-based OS
-      ansible.builtin.apt:
-        name: iputils-ping
-        state: present
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Install ping on RedHat-based OS
-      ansible.builtin.yum:
-        name: iputils
-        state: present
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Verify ping installation
-      ansible.builtin.command: "which ping"
-      register: ping_path
-      changed_when: false
-
-    - name: Print ping location
-      ansible.builtin.debug:
-        msg: "Ping is installed at {{ ping_path.stdout }}"
-
-    - name: Ping the target device
-      ansible.builtin.command: "ping -c 4 64.233.180.138"
+    # - name: Ping the target device
+    #   ansible.builtin.command: >
+    #     {% if ansible_facts['os_family'] == 'Windows' %}
+    #     ping -n 4 {{ item }}
+    #     {% else %}
+    #     ping -c 4 {{ item }}
+    #     {% endif %}
+    #   register: ping_result
+    #   loop: "{{ targets }}"
+    #   ignore_errors: yes
+    - name: Ping the target device (Windows)
+      ansible.builtin.command: "ping -n 4 {{ item }}"
       register: ping_result
+      loop: "{{ targets }}"
+      ignore_errors: yes
+      when: ansible_facts['os_family'] == "Windows"
+
+    - name: Ping the target device (Linux/macOS)
+      ansible.builtin.command: "ping -c 4 {{ item }}"
+      register: ping_result
+      loop: "{{ targets }}"
+      ignore_errors: yes
+      when: ansible_facts['os_family'] != "Windows"
+
+
+    # - name: Print ping output
+    #   ansible.builtin.debug:
+    #     msg: "{{ ping_result.results | map(attribute='stdout') | list }}"
+    - name: Print ping output
+      ansible.builtin.debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ ping_result.results }}"
+      when: ping_result.results is defined
+
+
+    - name: Run traceroute if ping fails
+      ansible.builtin.command: >
+        {% if ansible_facts['os_family'] == 'Windows' %}
+        tracert {{ item }}
+        {% else %}
+        traceroute {{ item }}
+        {% endif %}
+      when: ping_result is failed
+      register: traceroute_result
+      loop: "{{ targets }}"
       ignore_errors: yes
 
-    - name: Print ping output if successful
+    - name: Print traceroute output
       ansible.builtin.debug:
-        msg: "Ping successful! Output: {{ ping_result.stdout }}"
-      when: ping_result.rc == 0
+        msg: "{{ traceroute_result.results | map(attribute='stdout') | list }}"
+      when: traceroute_result is not skipped
 
-    - name: Print ping failure if unsuccessful
-      ansible.builtin.debug:
-        msg: "Ping failed! Error: {{ ping_result.stderr }}"
-      when: ping_result.rc != 0
+    - name: Log incident in ServiceNow if packet loss is detected
+      ansible.builtin.uri:
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
+        method: POST
+        user: "{{ service_now.username }}"
+        password: "{{ service_now.password }}"
+        force_basic_auth: yes
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          impact: "{{ service_now.impact }}"
+          urgency: "{{ service_now.urgency }}"
+          short_description: "{{ service_now.short_description }}"
+          description: "Packet loss detected on {{ item }} at {{ ansible_date_time.iso8601 }}"
+        status_code: 201
+      when: ping_result is failed
+      loop: "{{ targets }}"
+      ignore_errors: yes
