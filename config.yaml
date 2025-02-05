@@ -1,13 +1,40 @@
-- name: Check if ping is available
+- name: Ensure ping is installed and monitor connectivity
   hosts: localhost
+  become: yes
   gather_facts: yes
   tasks:
-    - name: Check ping path
+    - name: Install ping on Debian-based OS
+      ansible.builtin.apt:
+        name: iputils-ping
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install ping on RedHat-based OS
+      ansible.builtin.yum:
+        name: iputils
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Verify ping installation
       ansible.builtin.command: "which ping"
       register: ping_path
       changed_when: false
-      ignore_errors: yes
 
-    - name: Display ping location
+    - name: Print ping location
       ansible.builtin.debug:
         msg: "Ping is installed at {{ ping_path.stdout }}"
+
+    - name: Ping the target device
+      ansible.builtin.command: "ping -c 4 64.233.180.138"
+      register: ping_result
+      ignore_errors: yes
+
+    - name: Print ping output if successful
+      ansible.builtin.debug:
+        msg: "Ping successful! Output: {{ ping_result.stdout }}"
+      when: ping_result.rc == 0
+
+    - name: Print ping failure if unsuccessful
+      ansible.builtin.debug:
+        msg: "Ping failed! Error: {{ ping_result.stderr }}"
+      when: ping_result.rc != 0
