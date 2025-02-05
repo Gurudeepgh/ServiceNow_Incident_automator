@@ -1,19 +1,7 @@
-# targets:
-#   - "64.233.180.138"
-  
-# service_now:
-#   instance: "dev262979.service-now.com"
-#   username: "elt_agent"
-#   password: "o@.CSQwgo^z6W!s6"
-#   table: "incident"
-#   impact: "3"
-#   urgency: "3"
-#   short_description: "Packet loss detected"
-
 ---
 - name: Monitor network and log incidents in ServiceNow
   hosts: localhost
-  gather_facts: no
+  gather_facts: true
   vars:
     targets:
       - "64.233.180.138"
@@ -27,16 +15,30 @@
       short_description: "Packet loss detected"
 
   tasks:
-    - name: Ping the target device
-      ansible.builtin.command: >
-        {% if ansible_facts['os_family'] == 'Windows' %}
-        ping -n 4 {{ item }}
-        {% else %}
-        ping -c 4 {{ item }}
-        {% endif %}
+    # - name: Ping the target device
+    #   ansible.builtin.command: >
+    #     {% if ansible_facts['os_family'] == 'Windows' %}
+    #     ping -n 4 {{ item }}
+    #     {% else %}
+    #     ping -c 4 {{ item }}
+    #     {% endif %}
+    #   register: ping_result
+    #   loop: "{{ targets }}"
+    #   ignore_errors: yes
+    - name: Ping the target device (Windows)
+      ansible.builtin.command: "ping -n 4 {{ item }}"
       register: ping_result
       loop: "{{ targets }}"
       ignore_errors: yes
+      when: ansible_facts['os_family'] == "Windows"
+
+    - name: Ping the target device (Linux/macOS)
+      ansible.builtin.command: "ping -c 4 {{ item }}"
+      register: ping_result
+      loop: "{{ targets }}"
+      ignore_errors: yes
+      when: ansible_facts['os_family'] != "Windows"
+
 
     # - name: Print ping output
     #   ansible.builtin.debug:
