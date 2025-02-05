@@ -1,7 +1,12 @@
 - name: Ensure ping is installed
-  hosts: localhost  # Change this to your target host if needed
-  become: yes       # Run as sudo (required for installation)
+  hosts: localhost  # Change to your target if needed
+  become: yes       # Required for package installation
   tasks:
+
+    - name: Update package cache (for Debian-based systems)
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Install ping on Debian/Ubuntu
       ansible.builtin.apt:
@@ -14,6 +19,12 @@
         name: iputils
         state: present
       when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install Homebrew (if not installed) on macOS
+      ansible.builtin.command: "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+      args:
+        creates: /usr/local/bin/brew
+      when: ansible_facts['os_family'] == "Darwin"
 
     - name: Install ping on macOS
       ansible.builtin.homebrew:
