@@ -1,0 +1,31 @@
+- name: Ensure ping is installed
+  hosts: localhost  # Change this to your target host if needed
+  become: yes       # Run as sudo (required for installation)
+  tasks:
+
+    - name: Install ping on Debian/Ubuntu
+      ansible.builtin.apt:
+        name: iputils-ping
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install ping on RHEL/CentOS
+      ansible.builtin.yum:
+        name: iputils
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install ping on macOS
+      ansible.builtin.homebrew:
+        name: iputils
+        state: present
+      when: ansible_facts['os_family'] == "Darwin"
+
+    - name: Verify ping installation
+      ansible.builtin.command: "which ping"
+      register: ping_path
+      changed_when: false
+
+    - name: Print ping location
+      ansible.builtin.debug:
+        msg: "Ping is located at {{ ping_path.stdout }}"
