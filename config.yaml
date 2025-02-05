@@ -5,6 +5,7 @@
   vars:
     targets:
       - "64.233.180.138"
+      - "192.0.43.10"
     service_now:
       instance: "dev262979.service-now.com"
       username: "elt_agent"
