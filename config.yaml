@@ -24,11 +24,15 @@
       register: reachability_results
       ignore_errors: true
       loop: "{{ targets }}"
-
-    - name: Print traceroute output
+      
+    - name: Print reachability results
       ansible.builtin.debug:
-        msg: "{{ traceroute_result.results | map(attribute='stdout') | list }}"
-      when: traceroute_result is defined
+        msg: "Device {{ item.item }} is {{ 'reachable' if not item.failed else 'not reachable' }}"
+      loop: "{{ reachability_results.results }}"
+    # - name: Print traceroute output
+    #   ansible.builtin.debug:
+    #     msg: "{{ traceroute_result.results | map(attribute='stdout') | list }}"
+    #   when: traceroute_result is defined
 
     # - name: Run traceroute if device is unreachable
     #   community.general.traceroute:
@@ -59,6 +63,7 @@
           short_description: "{{ service_now.short_description }}"
           description: "Device {{ item.item }} is not reachable at {{ ansible_date_time.iso8601 }}"
         status_code: 201
-      when: item.state != "started"
+      # when: item.state != "started"
+      when: item.failed | default(false)
       loop: "{{ reachability_results.results }}"
       ignore_errors: yes
