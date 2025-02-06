@@ -3,13 +3,11 @@
   hosts: localhost
   gather_facts: true
   vars:
-    targets:
-      - "64.233.180"
-      - "192.0.43.10"
+    targets: []
     service_now:
-      instance: "dev262979.service-now.com"
-      username: "elt_agent"
-      password: "o@.CSQwgo^z6W!s6"
+      instance: ""
+      username: ""
+      password: ""
       table: "incident"
       impact: "3"
       urgency: "3"
