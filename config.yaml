@@ -30,18 +30,18 @@
         msg: "Device {{ item.item }} is {{ 'reachable' if item.state == 'started' else 'not reachable' }}"
       loop: "{{ reachability_results.results }}"
 
-    - name: Run traceroute if device is unreachable
-      community.general.traceroute:
-        host: "{{ item.item }}"
-      register: traceroute_result
-      loop: "{{ reachability_results.results }}"
-      when: item.state != "started"
-      ignore_errors: yes
+    # - name: Run traceroute if device is unreachable
+    #   community.general.traceroute:
+    #     host: "{{ item.item }}"
+    #   register: traceroute_result
+    #   loop: "{{ reachability_results.results }}"
+    #   when: item.state != "started"
+    #   ignore_errors: yes
 
-    - name: Print traceroute output
-      ansible.builtin.debug:
-        msg: "{{ traceroute_result.results | map(attribute='stdout') | list }}"
-      when: traceroute_result is defined
+    # - name: Print traceroute output
+    #   ansible.builtin.debug:
+    #     msg: "{{ traceroute_result.results | map(attribute='stdout') | list }}"
+    #   when: traceroute_result is defined
 
     - name: Log incident in ServiceNow if device is unreachable
       ansible.builtin.uri:
