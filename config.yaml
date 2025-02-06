@@ -4,7 +4,7 @@
   gather_facts: true
   vars:
     targets:
-      - "64.233.180.138"
+      - "64.233.180.18"
       - "192.0.43.10"
     service_now:
       instance: "dev262979.service-now.com"
