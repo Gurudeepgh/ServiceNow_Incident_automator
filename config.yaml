@@ -17,7 +17,7 @@
     - name: Check if device is reachable (wait_for)
       ansible.builtin.wait_for:
         host: "{{ item }}"
-        port: 80  # SSH port (can change to 80 for HTTP or other relevant ports)
+        port: 22  # SSH port (can change to 80 for HTTP or other relevant ports)
         timeout: 5
       register: reachability_results
       ignore_errors: true
