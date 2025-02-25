@@ -6,7 +6,7 @@
     datadog:
       api_key: "439640dfc8661bb24b801b1e6a886e6b"
       app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
-      api_url: "https://api.datadoghq.com/api/v2/monitor"
+      api_url: "https://api.us5.datadoghq.com/api/v1/monitor"
 
     service_now:
       instance: "dev262979.service-now.com"
