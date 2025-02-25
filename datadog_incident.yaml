@@ -50,8 +50,9 @@
           short_description: "Datadog Alert - {{ item.name }}"
           description: "Alert triggered in Datadog. Severity: {{ item.severity }} at {{ ansible_date_time.iso8601 }}"
         status_code: 201
-      loop: "{{ datadog_alerts.json.alerts }}"
-      when: item.status == "triggered"
+      loop: "{{ datadog_alerts.json }}"
+      # when: item.status == "triggered"
+      when: item.state.group_states.alert | default(0) > 0
       register: created_cases
 
     - name: Wait for recovery window (5 minutes)
@@ -70,7 +71,7 @@
 
     - name: Auto-resolve ServiceNow case if alert is recovered
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
+        url: "https://{{ service_now.instance }}/api/now/table/case"
         method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
