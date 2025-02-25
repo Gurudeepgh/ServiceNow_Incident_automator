@@ -4,14 +4,14 @@
   gather_facts: yes  # Required for ansible_date_time
   vars:
     datadog:
-      api_key: "your_datadog_api_key"
-      app_key: "your_datadog_app_key"
+      api_key: "439640dfc8661bb24b801b1e6a886e6b"
+      app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
       api_url: "https://api.datadoghq.com/api/v1/alerts"
 
     service_now:
-      instance: "your_instance.service-now.com"
-      username: "your_username"
-      password: "your_password"
+      instance: "dev262979.service-now.com"
+      username: "elt_agent"
+      password: "o@.CSQwgo^z6W!s6"
       table: "incident"
       impact: "2"
       urgency: "2"
@@ -32,7 +32,7 @@
 
     - name: Create ServiceNow case for each triggered alert
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
+        url: "https://{{ service_now.instance }}/api/now/table/case"
         method: POST
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
