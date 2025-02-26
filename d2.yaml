@@ -72,10 +72,27 @@
         return_content: yes
       register: updated_alerts
 
-    - name: Auto-resolve ServiceNow case if alert is recovered
+    # - name: Auto-resolve ServiceNow case if alert is recovered
+    #   ansible.builtin.uri:
+    #     url: "https://{{ service_now.instance }}/api/now/table/case/{{ item }}"
+    #     method: PUT
+    #     user: "{{ service_now.username }}"
+    #     password: "{{ service_now.password }}"
+    #     force_basic_auth: yes
+    #     headers:
+    #       Content-Type: "application/json"
+    #     body_format: json
+    #     body:
+    #       state: "6"  # 6 = Resolved in ServiceNow
+    #       short_description: "Datadog Alert - Resolved"
+    #       description: "The alert has recovered within the recovery window."
+    #     status_code: [200, 201]
+    #   loop: "{{ created_cases.results | map(attribute='json.result.sys_id') | list }}"
+    #   when: item is defined
+    - name: Auto-resolve ServiceNow case if alert is no longer active
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/case/{{ item }}"
-        method: PUT
+        url: "https://{{ service_now.instance }}/api/now/table/case/{{ item.sys_id }}"
+        method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
         force_basic_auth: yes
@@ -84,11 +101,13 @@
         body_format: json
         body:
           state: "6"  # 6 = Resolved in ServiceNow
-          short_description: "Datadog Alert - Resolved"
-          description: "The alert has recovered within the recovery window."
+          short_description: "Datadog Alert - {{ item.alert_name }} (Resolved)"
+          description: "The alert has recovered or no longer exists in Datadog."
         status_code: [200, 201]
-      loop: "{{ created_cases.results | map(attribute='json.result.sys_id') | list }}"
-      when: item is defined
+      loop: "{{ created_cases.results }}"
+      when: 
+        - item.json.result.sys_id is defined
+        - item.alert_id not in (updated_alerts.json.monitors | map(attribute='id') | list)
 
     - name: Convert case into an incident if alert is still active
       ansible.builtin.uri:
