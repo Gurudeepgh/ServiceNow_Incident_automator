@@ -51,7 +51,8 @@
           description: "Alert triggered in Datadog. Severity: {{ item.severity }} at {{ ansible_date_time.iso8601 }}"
         status_code: 201
       loop: "{{ datadog_alerts.json }}"
-      when: item.status == "triggered"
+      when: item.overall_state == "Alert"
+      # when: item.status == "triggered"
       # when: item.state.group_states.alert | default(0) > 0
       register: created_cases
 
@@ -85,7 +86,8 @@
           description: "The alert has recovered within the recovery window."
         status_code: 200
       loop: "{{ updated_alerts.json }}"
-      when: item.status == "resolved"
+      when: item.overall_state != "Alert"
+      # when: item.status == "resolved"
       # when: item.state.group_states.alert | default(0) > 0
 
     - name: Convert case into an incident if alert is still active
@@ -104,4 +106,5 @@
           description: "The alert is still active after the recovery window. Escalating to an incident."
         status_code: 200
       loop: "{{ updated_alerts.json }}"
-      when: item.status == "triggered"
+      when: item.overall_state == "Alert"
+      # when: item.status == "triggered"
