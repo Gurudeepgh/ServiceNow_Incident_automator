@@ -45,8 +45,8 @@
           Content-Type: "application/json"
         body_format: json
         body:
-          # impact: "{{ service_now.impact }}"
-          # urgency: "{{ service_now.urgency }}"
+          impact: "{{ service_now.impact }}"
+          urgency: "{{ service_now.urgency }}"
           short_description: "Datadog Alert - {{ item.name }}"
           description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
         status_code: [200, 201]
