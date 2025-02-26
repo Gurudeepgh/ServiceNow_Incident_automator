@@ -104,7 +104,7 @@
           short_description: "Datadog Alert - {{ item.alert_name }} (Resolved)"
           description: "The alert has recovered or no longer exists in Datadog."
         status_code: [200, 201]
-      loop: "{{ created_cases.results }}"
+      loop: "{{ created_cases }}"
       when: 
         - item.json.result.sys_id is defined
         - item.alert_id not in (updated_alerts.json | map(attribute='id') | list)
