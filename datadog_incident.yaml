@@ -48,7 +48,7 @@
           impact: "{{ service_now.impact }}"
           urgency: "{{ service_now.urgency }}"
           short_description: "Datadog Alert - {{ item.name }}"
-          description: "Alert triggered in Datadog. Severity: {{ item.severity }} at {{ ansible_date_time.iso8601 }}"
+          description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
         status_code: 201
       loop: "{{ datadog_alerts.json }}"
       when: item.overall_state == "Alert"
