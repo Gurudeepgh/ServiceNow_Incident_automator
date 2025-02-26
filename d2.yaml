@@ -16,7 +16,7 @@
       impact: "2"
       urgency: "2"
 
-    recovery_window: 300  # 5 minutes
+    recovery_window: 3    # 300 for 5 minutes
 
   tasks:
 
