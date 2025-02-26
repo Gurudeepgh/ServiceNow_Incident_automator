@@ -9,9 +9,9 @@
       api_url: "https://api.us5.datadoghq.com/api/v1/monitor"
 
     service_now:
-      instance: "dev262979.service-now.com"
-      username: "elt_agent"
-      password: "o@.CSQwgo^z6W!s6"
+      instance: "dev247928.service-now.com"
+      username: "admin"
+      password: "%ml4Vs9RXE/s"
       table: "incident"
       impact: "2"
       urgency: "2"
