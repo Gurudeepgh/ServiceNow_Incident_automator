@@ -36,7 +36,7 @@
 
     - name: Create ServiceNow case for each triggered alert
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/case"
+        url: "https://{{ service_now.instance }}/api/now/table/incident"
         method: POST
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
