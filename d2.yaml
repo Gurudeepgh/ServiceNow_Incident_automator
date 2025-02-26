@@ -50,7 +50,7 @@
           short_description: "Datadog Alert - {{ item.name }}"
           description: "Alert triggered in Datadog at {{ ansible_date_time.iso8601 }}"
         status_code: [200, 201]
-      loop: "{{ datadog_alerts.json.monitors | default([]) }}"
+      loop: "{{ datadog_alerts.json | default([]) }}"
       when: item.overall_state | default('') == "Alert"
       register: created_cases
 
@@ -107,7 +107,7 @@
       loop: "{{ created_cases.results }}"
       when: 
         - item.json.result.sys_id is defined
-        - item.alert_id not in (updated_alerts.json.monitors | map(attribute='id') | list)
+        - item.alert_id not in (updated_alerts.json | map(attribute='id') | list)
 
     - name: Convert case into an incident if alert is still active
       ansible.builtin.uri:
