@@ -56,9 +56,9 @@
       # when: item.state.group_states.alert | default(0) > 0
       register: created_cases
 
-    - name: Wait for recovery window (5 minutes)
-      ansible.builtin.pause:
-        seconds: "{{ recovery_window }}"
+    # - name: Wait for recovery window (5 minutes)
+    #   ansible.builtin.pause:
+    #     seconds: "{{ recovery_window }}"
 
     - name: Check if alert is recovered
       ansible.builtin.uri:
@@ -84,7 +84,7 @@
           state: "resolved"
           short_description: "Datadog Alert - {{ item.name }} (Resolved)"
           description: "The alert has recovered within the recovery window."
-        status_code: 200
+        status_code: [200, 201]
       loop: "{{ updated_alerts.json }}"
       when: item.overall_state != "Alert"
       # when: item.status == "resolved"
@@ -104,7 +104,7 @@
           state: "in_progress"
           short_description: "Datadog Alert - {{ item.name }} (Incident Created)"
           description: "The alert is still active after the recovery window. Escalating to an incident."
-        status_code: 200
+        status_code: [200, 201]
       loop: "{{ updated_alerts.json }}"
       when: item.overall_state == "Alert"
       # when: item.status == "triggered"
