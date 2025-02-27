@@ -69,6 +69,11 @@
           DD-APPLICATION-KEY: "{{ datadog.app_key }}"
         return_content: yes
       register: updated_alerts
+      
+    - name: "Find common alerts in Datadog and Updated Alerts"
+      set_fact:
+        common_alerts: "{{ datadog_alerts.json | selectattr('id', 'in', updated_alerts.json | map(attribute='id')) | list }}"
+
 
     # - name: Auto-resolve ServiceNow case if alert is recovered
     #   ansible.builtin.uri:
