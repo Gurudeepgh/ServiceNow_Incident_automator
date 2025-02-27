@@ -131,7 +131,7 @@
           short_description: "Datadog Alert - Case Resolved"
           description: "No active alerts found for this case. Resolving case."
         status_code: [200, 201]
-      loop: "{{ created_cases.json.result }}"
+      loop: "{{ created_cases.result }}"
       when: item.id not in (updated_alerts.json | map(attribute='id') | list)
 
 
