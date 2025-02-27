@@ -15,6 +15,7 @@
       table: "incident"
       impact: "2"
       urgency: "2"
+      status:"created"
 
     recovery_window: 300  # 5 minutes
 
@@ -45,6 +46,8 @@
           Content-Type: "application/json"
         body_format: json
         body:
+          u_id:"{{item.id}}"
+          u_status: "{{service_now.impact}}"
           u_impact: "{{ service_now.impact }}"
           u_urgency: "{{ service_now.urgency }}"
           u_short_description: "Datadog Alert - {{ item.name }}"
