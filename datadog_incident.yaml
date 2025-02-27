@@ -51,7 +51,7 @@
           u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
         status_code: [200, 201]
       loop: "{{ datadog_alerts.json }}"
-      when: item.overall_state == "Alert"
+      when: item.overall_state in ["Alert", "OK"]
       # when: item.status == "triggered"
       # when: item.state.group_states.alert | default(0) > 0
       register: created_cases
@@ -113,7 +113,7 @@
     - name: Convert case into an incident if alert is still active
       ansible.builtin.uri:
         url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
-        method: PATCH
+        method: POST
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
         force_basic_auth: yes
@@ -126,5 +126,5 @@
           description: "The alert is still active after the recovery window. Escalating to an incident."
         status_code: [200, 201]
       loop: "{{ updated_alerts.json }}"
-      when: item.overall_state == "Alert"
+      when: item.overall_state in ["Alert", "OK"]
       # when: item.status == "triggered"
