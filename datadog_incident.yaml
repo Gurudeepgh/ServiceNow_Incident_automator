@@ -46,7 +46,7 @@
           Content-Type: "application/json"
         body_format: json
         body:
-          u_status: "created"
+          u_state: "created"
           u_impact: "{{ service_now.impact }}"
           u_urgency: "{{ service_now.urgency }}"
           u_short_description: "Datadog Alert - {{ item.name }}"
