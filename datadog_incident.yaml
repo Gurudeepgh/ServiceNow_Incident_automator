@@ -51,7 +51,7 @@
           u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
         status_code: [200, 201]
       loop: "{{ datadog_alerts.json }}"
-      when: item.overall_state == "OK"
+      when: item.overall_state == "Alert"
       # when: item.status == "triggered"
       # when: item.state.group_states.alert | default(0) > 0
       register: created_cases
