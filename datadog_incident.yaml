@@ -15,7 +15,7 @@
       table: "incident"
       impact: "2"
       urgency: "2"
-      status:"created"
+      
 
     recovery_window: 300  # 5 minutes
 
@@ -46,12 +46,12 @@
           Content-Type: "application/json"
         body_format: json
         body:
-          u_id:"{{item.id}}"
-          u_status: "{{service_now.impact}}"
+          u_status: "created"
           u_impact: "{{ service_now.impact }}"
           u_urgency: "{{ service_now.urgency }}"
           u_short_description: "Datadog Alert - {{ item.name }}"
           u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
+          u_id: "{{item.id}}"
         status_code: [200, 201]
       loop: "{{ datadog_alerts.json }}"
       when: item.overall_state in ["Alert", "OK"]
