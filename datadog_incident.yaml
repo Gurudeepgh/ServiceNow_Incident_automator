@@ -116,6 +116,24 @@
       loop: "{{ open_cases.json.result }}"
       when: updated_alerts.json | length == 0
 
+    - name: "Resolve ServiceNow cases if the corresponding Datadog alert is missing"
+      ansible.builtin.uri:
+        url: "https://{{ service_now.instance }}/api/now/table/u_case1/{{ item.sys_id }}"
+        method: PATCH
+        user: "{{ service_now.username }}"
+        password: "{{ service_now.password }}"
+        force_basic_auth: yes
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          state: "resolved"
+          short_description: "Datadog Alert - Case Resolved"
+          description: "No active alerts found for this case. Resolving case."
+        status_code: [200, 201]
+      loop: "{{ created_cases.json.result }}"
+      when: item.id not in (updated_alerts.json | map(attribute='id') | list)
+
 
 
     - name: Convert case into an incident if alert is still active
