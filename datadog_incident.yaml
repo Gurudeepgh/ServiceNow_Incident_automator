@@ -46,12 +46,12 @@
         body_format: json
         body:
           u_impact: "{{ service_now.impact }}"
-          urgency: "{{ service_now.urgency }}"
-          short_description: "Datadog Alert - {{ item.name }}"
-          description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
+          u_urgency: "{{ service_now.urgency }}"
+          u_short_description: "Datadog Alert - {{ item.name }}"
+          u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
         status_code: [200, 201]
       loop: "{{ datadog_alerts.json }}"
-      when: item.overall_state == "Alert"
+      when: item.overall_state == "OK"
       # when: item.status == "triggered"
       # when: item.state.group_states.alert | default(0) > 0
       register: created_cases
