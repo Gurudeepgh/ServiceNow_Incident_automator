@@ -4,7 +4,7 @@
   gather_facts: yes  # Required for ansible_date_time
   vars:
     datadog:
-      api_key: "439640dfc8661bb24b801b1e6a886e6b"
+      api_key: "9cae63ce64fcea730e71e8a71e572beb"
       app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
       api_url: "https://api.us5.datadoghq.com/api/v1/monitor"
 
