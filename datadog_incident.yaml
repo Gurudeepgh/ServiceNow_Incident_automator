@@ -1,25 +1,23 @@
 ---
 - name: Handle Datadog Alerts and Manage ServiceNow Cases
   hosts: localhost
-  gather_facts: yes  # Required for ansible_date_time
+  gather_facts: no
+ 
   vars:
-    sys_id: ""
-    datadog:
-      api_key: "9cae63ce64fcea730e71e8a71e572beb"
-      app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
-      api_url: "https://api.us5.datadoghq.com/api/v1/monitor"
-
     service_now:
       instance: "dev247928.service-now.com"
       username: "admin"
       password: "%ml4Vs9RXE/s"
       case_table: "u_case1"
-      impact: "2"
-      urgency: "2"
       incident_table: "incident"
-
-    recovery_window: 300  # 5 minutes
-
+ 
+    datadog:
+      api_key: "9cae63ce64fcea730e71e8a71e572beb"
+      app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
+      api_url: "https://api.us5.datadoghq.com/api/v1/monitor"
+ 
+    recovery_window: 300  # 5 minutes in seconds
+ 
   tasks:
     - name: Fetch case details from ServiceNow using sys_id
       ansible.builtin.uri:
@@ -32,19 +30,19 @@
           Content-Type: "application/json"
         return_content: yes
       register: case_details
-
+ 
     - name: Debug case details
-      debug:
+      ansible.builtin.debug:
         var: case_details
-
+ 
     - name: Extract alert ID from case details
-      set_fact:
-        alert_id: "{{ case_details.json.result.u_id }}"
-
+      ansible.builtin.set_fact:
+        alert_id: "{{ case_details.json.result.u_alert_id }}"
+ 
     - name: Wait for recovery window (5 minutes)
       ansible.builtin.pause:
         seconds: "{{ recovery_window }}"
-
+ 
     - name: Fetch alert details from Datadog
       ansible.builtin.uri:
         url: "{{ datadog.api_url }}/{{ alert_id }}"
@@ -54,11 +52,11 @@
           DD-APPLICATION-KEY: "{{ datadog.app_key }}"
         return_content: yes
       register: alert_details
-
+ 
     - name: Debug alert details
-      debug:
+      ansible.builtin.debug:
         var: alert_details
-
+ 
     - name: Check if alert is resolved
       ansible.builtin.uri:
         url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id }}"
@@ -73,8 +71,8 @@
           state: "resolved"
           work_notes: "Alert resolved in Datadog. Case closed."
         status_code: [200, 201]
-      when: alert_details.json.overall_state != "Alert" and alert_details.json.overall_state != "OK"
-
+      when: alert_details.json.overall_state != "Alert"
+ 
     - name: Create incident if alert is still active
       ansible.builtin.uri:
         url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}"
@@ -91,10 +89,7 @@
           impact: "2"
           urgency: "2"
         status_code: [200, 201]
-      when: alert_details.json.overall_state == "Alert" or alert_details.json.overall_state == "OK"
-
- 
-
+      when: alert_details.json.overall_state == "Alert"
   # tasks:
 
   #   - name: Fetch alerts from Datadog
