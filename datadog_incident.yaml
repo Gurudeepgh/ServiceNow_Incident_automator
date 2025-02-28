@@ -4,6 +4,7 @@
   gather_facts: no
  
   vars:
+    sys_id2: ""
     service_now:
       instance: "dev247928.service-now.com"
       username: "admin"
@@ -21,7 +22,7 @@
   tasks:
     - name: Fetch case details from ServiceNow using sys_id
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id }}"
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id2 }}"
         method: GET
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
@@ -59,7 +60,7 @@
  
     - name: Check if alert is resolved
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id }}"
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id2 }}"
         method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
