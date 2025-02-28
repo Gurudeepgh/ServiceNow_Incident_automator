@@ -3,6 +3,7 @@
   hosts: localhost
   gather_facts: yes  # Required for ansible_date_time
   vars:
+    sys_id: ""
     datadog:
       api_key: "9cae63ce64fcea730e71e8a71e572beb"
       app_key: "cca1ca0fe667e3ebd44f4bcc01c7f042a99b1831"
@@ -12,95 +13,55 @@
       instance: "dev247928.service-now.com"
       username: "admin"
       password: "%ml4Vs9RXE/s"
-      table: "incident"
+      case_table: "u_case1"
       impact: "2"
       urgency: "2"
+      incident_table: "incident"
       
-
     recovery_window: 300  # 5 minutes
-
-  tasks:
-
-    - name: Fetch alerts from Datadog
+ 
+tasks:
+    - name: Fetch case details from ServiceNow using sys_id
       ansible.builtin.uri:
-        url: "{{ datadog.api_url }}"
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id }}"
         method: GET
+        user: "{{ service_now.username }}"
+        password: "{{ service_now.password }}"
+        force_basic_auth: yes
         headers:
-          DD-API-KEY: "{{ datadog.api_key }}"
-          DD-APPLICATION-KEY: "{{ datadog.app_key }}"
+          Content-Type: "application/json"
         return_content: yes
-      register: datadog_alerts
-
-    - name: Debug Datadog API Response
+      register: case_details
+ 
+    - name: Debug case details
       debug:
-        var: datadog_alerts
-
-    # - name: Create ServiceNow case for each triggered alert
-    #   ansible.builtin.uri:
-    #     url: "https://{{ service_now.instance }}/api/now/table/u_case1"
-    #     method: POST
-    #     user: "{{ service_now.username }}"
-    #     password: "{{ service_now.password }}"
-    #     force_basic_auth: yes
-    #     headers:
-    #       Content-Type: "application/json"
-    #     body_format: json
-    #     body:
-    #       u_state: "created"
-    #       u_impact: "{{ service_now.impact }}"
-    #       u_urgency: "{{ service_now.urgency }}"
-    #       u_short_description: "Datadog Alert - {{ item.name }}"
-    #       u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
-    #       u_id: "{{item.id}}"
-    #     status_code: [200, 201]
-    #   loop: "{{ datadog_alerts.json }}"
-    #   when: item.overall_state in ["Alert", "OK"]
-    #   # when: item.status == "triggered"
-    #   # when: item.state.group_states.alert | default(0) > 0
-    #   register: created_cases
-
-    # - name: Wait for recovery window (5 minutes)
-    #   ansible.builtin.pause:
-    #     seconds: "{{ recovery_window }}"
-
-    - name: Check if alert is recovered
+        var: case_details
+ 
+    - name: Extract alert ID from case details
+      set_fact:
+        alert_id: "{{ case_details.json.result.u_id }}"
+ 
+    - name: Wait for recovery window (5 minutes)
+      ansible.builtin.pause:
+        seconds: "{{ recovery_window }}"
+ 
+    - name: Fetch alert details from Datadog
       ansible.builtin.uri:
-        url: "{{ datadog.api_url }}"
+        url: "{{ datadog.api_url }}/{{ alert_id }}"
         method: GET
         headers:
           DD-API-KEY: "{{ datadog.api_key }}"
           DD-APPLICATION-KEY: "{{ datadog.app_key }}"
         return_content: yes
-      register: updated_alerts
-      
-    - name: "Find common alerts in Datadog and Updated Alerts"
-      set_fact:
-        common_alerts: "{{ datadog_alerts.json | selectattr('id', 'in', updated_alerts.json | map(attribute='id')) | list }}"
-
-
-    # - name: Auto-resolve ServiceNow case if alert is recovered
-    #   ansible.builtin.uri:
-    #     url: "https://{{ service_now.instance }}/api/now/table/u_case1"
-    #     method: PATCH
-    #     user: "{{ service_now.username }}"
-    #     password: "{{ service_now.password }}"
-    #     force_basic_auth: yes
-    #     headers:
-    #       Content-Type: "application/json"
-    #     body_format: json
-    #     body:
-    #       state: "resolved"
-    #       short_description: "Datadog Alert - {{ item.name }} (Resolved)"
-    #       description: "The alert has recovered within the recovery window."
-    #     status_code: [200, 201]
-    #   loop: "{{ updated_alerts.json }}"
-    #   when: item.overall_state != "Alert"
-    #   # when: item.status == "resolved"
-    #   # when: item.state.group_states.alert | default(0) > 0
-
-    - name: "Resolve all open ServiceNow cases if no active alerts exist"
+      register: alert_details
+ 
+    - name: Debug alert details
+      debug:
+        var: alert_details
+ 
+    - name: Check if alert is resolved
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/u_case1/{{ item.sys_id }}"
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.case_table }}/{{ sys_id }}"
         method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
@@ -110,35 +71,13 @@
         body_format: json
         body:
           state: "resolved"
-          short_description: "Datadog Alert - Case Resolved"
-          description: "No active alerts found. Resolving case."
+          work_notes: "Alert resolved in Datadog. Case closed."
         status_code: [200, 201]
-      loop: "{{ open_cases.json.result }}"
-      when: updated_alerts.json | length == 0
-
-    # - name: "Resolve ServiceNow cases if the corresponding Datadog alert is missing"
-    #   ansible.builtin.uri:
-    #     url: "https://{{ service_now.instance }}/api/now/table/u_case1/{{ item.sys_id }}"
-    #     method: PATCH
-    #     user: "{{ service_now.username }}"
-    #     password: "{{ service_now.password }}"
-    #     force_basic_auth: yes
-    #     headers:
-    #       Content-Type: "application/json"
-    #     body_format: json
-    #     body:
-    #       state: "resolved"
-    #       short_description: "Datadog Alert - Case Resolved"
-    #       description: "No active alerts found for this case. Resolving case."
-    #     status_code: [200, 201]
-    #   loop: "{{ created_cases }}"
-    #   when: item.id not in (updated_alerts.json | map(attribute='id') | list)
-
-
-
-    - name: Convert case into an incident if alert is still active
+      when: alert_details.json.overall_state != ["Alert", "OK"]
+ 
+    - name: Create incident if alert is still active
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}"
         method: POST
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
@@ -147,10 +86,146 @@
           Content-Type: "application/json"
         body_format: json
         body:
-          state: "in_progress"
-          short_description: "Datadog Alert - {{ item.name }} (Incident Created)"
+          short_description: "Datadog Alert - {{ alert_details.json.name }} (Incident Created)"
           description: "The alert is still active after the recovery window. Escalating to an incident."
+          impact: "2"
+          urgency: "2"
         status_code: [200, 201]
-      loop: "{{ updated_alerts.json }}"
-      when: item.overall_state in ["Alert", "OK"]
-      # when: item.status == "triggered"
+      when: alert_details.json.overall_state == ["Alert", "OK"]
+ 
+
+  # tasks:
+
+  #   - name: Fetch alerts from Datadog
+  #     ansible.builtin.uri:
+  #       url: "{{ datadog.api_url }}"
+  #       method: GET
+  #       headers:
+  #         DD-API-KEY: "{{ datadog.api_key }}"
+  #         DD-APPLICATION-KEY: "{{ datadog.app_key }}"
+  #       return_content: yes
+  #     register: datadog_alerts
+
+  #   - name: Debug Datadog API Response
+  #     debug:
+  #       var: datadog_alerts
+
+  #   # - name: Create ServiceNow case for each triggered alert
+  #   #   ansible.builtin.uri:
+  #   #     url: "https://{{ service_now.instance }}/api/now/table/u_case1"
+  #   #     method: POST
+  #   #     user: "{{ service_now.username }}"
+  #   #     password: "{{ service_now.password }}"
+  #   #     force_basic_auth: yes
+  #   #     headers:
+  #   #       Content-Type: "application/json"
+  #   #     body_format: json
+  #   #     body:
+  #   #       u_state: "created"
+  #   #       u_impact: "{{ service_now.impact }}"
+  #   #       u_urgency: "{{ service_now.urgency }}"
+  #   #       u_short_description: "Datadog Alert - {{ item.name }}"
+  #   #       u_description: "Alert triggered in Datadog. at {{ ansible_date_time.iso8601 }}"
+  #   #       u_id: "{{item.id}}"
+  #   #     status_code: [200, 201]
+  #   #   loop: "{{ datadog_alerts.json }}"
+  #   #   when: item.overall_state in ["Alert", "OK"]
+  #   #   # when: item.status == "triggered"
+  #   #   # when: item.state.group_states.alert | default(0) > 0
+  #   #   register: created_cases
+
+  #   # - name: Wait for recovery window (5 minutes)
+  #   #   ansible.builtin.pause:
+  #   #     seconds: "{{ recovery_window }}"
+
+  #   - name: Check if alert is recovered
+  #     ansible.builtin.uri:
+  #       url: "{{ datadog.api_url }}"
+  #       method: GET
+  #       headers:
+  #         DD-API-KEY: "{{ datadog.api_key }}"
+  #         DD-APPLICATION-KEY: "{{ datadog.app_key }}"
+  #       return_content: yes
+  #     register: updated_alerts
+      
+  #   - name: "Find common alerts in Datadog and Updated Alerts"
+  #     set_fact:
+  #       common_alerts: "{{ datadog_alerts.json | selectattr('id', 'in', updated_alerts.json | map(attribute='id')) | list }}"
+
+
+  #   # - name: Auto-resolve ServiceNow case if alert is recovered
+  #   #   ansible.builtin.uri:
+  #   #     url: "https://{{ service_now.instance }}/api/now/table/u_case1"
+  #   #     method: PATCH
+  #   #     user: "{{ service_now.username }}"
+  #   #     password: "{{ service_now.password }}"
+  #   #     force_basic_auth: yes
+  #   #     headers:
+  #   #       Content-Type: "application/json"
+  #   #     body_format: json
+  #   #     body:
+  #   #       state: "resolved"
+  #   #       short_description: "Datadog Alert - {{ item.name }} (Resolved)"
+  #   #       description: "The alert has recovered within the recovery window."
+  #   #     status_code: [200, 201]
+  #   #   loop: "{{ updated_alerts.json }}"
+  #   #   when: item.overall_state != "Alert"
+  #   #   # when: item.status == "resolved"
+  #   #   # when: item.state.group_states.alert | default(0) > 0
+
+  #   - name: "Resolve all open ServiceNow cases if no active alerts exist"
+  #     ansible.builtin.uri:
+  #       url: "https://{{ service_now.instance }}/api/now/table/u_case1/{{ item.sys_id }}"
+  #       method: PATCH
+  #       user: "{{ service_now.username }}"
+  #       password: "{{ service_now.password }}"
+  #       force_basic_auth: yes
+  #       headers:
+  #         Content-Type: "application/json"
+  #       body_format: json
+  #       body:
+  #         state: "resolved"
+  #         short_description: "Datadog Alert - Case Resolved"
+  #         description: "No active alerts found. Resolving case."
+  #       status_code: [200, 201]
+  #     loop: "{{ open_cases.json.result }}"
+  #     when: updated_alerts.json | length == 0
+
+  #   # - name: "Resolve ServiceNow cases if the corresponding Datadog alert is missing"
+  #   #   ansible.builtin.uri:
+  #   #     url: "https://{{ service_now.instance }}/api/now/table/u_case1/{{ item.sys_id }}"
+  #   #     method: PATCH
+  #   #     user: "{{ service_now.username }}"
+  #   #     password: "{{ service_now.password }}"
+  #   #     force_basic_auth: yes
+  #   #     headers:
+  #   #       Content-Type: "application/json"
+  #   #     body_format: json
+  #   #     body:
+  #   #       state: "resolved"
+  #   #       short_description: "Datadog Alert - Case Resolved"
+  #   #       description: "No active alerts found for this case. Resolving case."
+  #   #     status_code: [200, 201]
+  #   #   loop: "{{ created_cases }}"
+  #   #   when: item.id not in (updated_alerts.json | map(attribute='id') | list)
+
+
+
+  #   - name: Convert case into an incident if alert is still active
+  #     ansible.builtin.uri:
+  #       url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.table }}"
+  #       method: POST
+  #       user: "{{ service_now.username }}"
+  #       password: "{{ service_now.password }}"
+  #       force_basic_auth: yes
+  #       headers:
+  #         Content-Type: "application/json"
+  #       body_format: json
+  #       body:
+  #         state: "in_progress"
+  #         short_description: "Datadog Alert - {{ item.name }} (Incident Created)"
+  #         description: "The alert is still active after the recovery window. Escalating to an incident."
+  #       status_code: [200, 201]
+  #     loop: "{{ updated_alerts.json }}"
+  #     when: item.overall_state in ["Alert", "OK"]
+  #     # when: item.status == "triggered"
