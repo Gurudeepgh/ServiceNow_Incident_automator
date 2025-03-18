@@ -37,20 +37,27 @@
 
     - name: Prepare request body for update
       set_fact:
-        request_body: >
+        request_body: >-
+          {%- if ticket_type == 'incident' -%}
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}",
+            "impact": "{{ impact }}",
+            "urgency": "{{ urgency }}",
+            "priority": "{{ priority }}",
+            "comments": "{{ comments }}",
+            "work_notes": "{{ work_notes }}"
+            "state": "{{ state }}"
+          }
+          {%- else -%}
           {
             "short_description": "{{ short_description }}",
             "description": "{{ description }}",
             "priority": "{{ priority }}",
-            "impact": "{{ impact }}",
-            "urgency": "{{ urgency }}",
-            "state": "{{ state }}",
             "assigned_to": "{{ assigned_to }}",
             "assignment_group": "{{ assignment_group }}",
             "comments": "{{ comments }}",
             "work_notes": "{{ work_notes }}",
-            "due_date": "{{ due_date }}",
-            "escalation": "{{ escalation }}",
             "request_state": "{{ request_state }}",
             "stage": "{{ stage }}",
             "approval": "{{ approval }}",
@@ -58,7 +65,7 @@
             "service_offering": "{{ service_offering }}",
             "contact_type": "{{ contact_type }}"
           }
-
+          {%- endif -%}
     - name: Update Incident or Request in ServiceNow
       ansible.builtin.uri:
         url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ sys_id }}"
