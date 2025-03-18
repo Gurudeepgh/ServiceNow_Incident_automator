@@ -1,20 +1,47 @@
 ---
-- name: incident creator
+- name: ServiceNow Ticket Creator
   hosts: localhost
-  gather_facts: yes
- 
+  gather_facts: no
+
   vars:
     instance: "dev247928.service-now.com"
     username: "admin"
     password: "%ml4Vs9RXE/s"
     incident_table: "incident"
- 
- 
+    request_table: "sc_request"
+
+    # Ticket details
+    ticket_type: "incident"   # Change to "request" for a request
+    short_description: "Server down issue"
+    description: "The production server is down, needs immediate attention."
+    impact: "1"     # Only for incidents (1-High, 2-Medium, 3-Low)
+    urgency: "1"    # Only for incidents (1-High, 2-Medium, 3-Low)
+
   tasks:
-    
-    - name: Create incident 
+    - name: Set table name based on ticket type
+      set_fact:
+        table_name: "{{ incident_table if ticket_type == 'incident' else request_table }}"
+
+    - name: Prepare request body
+      set_fact:
+        request_body: >-
+          {%- if ticket_type == 'incident' -%}
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}",
+            "impact": "{{ impact }}",
+            "urgency": "{{ urgency }}"
+          }
+          {%- else -%}
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}"
+          }
+          {%- endif -%}
+
+    - name: Create Ticket in ServiceNow
       ansible.builtin.uri:
-        url: "https://{{ instance }}/api/now/table/{{ incident_table }}"
+        url: "https://{{ instance }}/api/now/table/{{ table_name }}"
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
@@ -22,11 +49,10 @@
         headers:
           Content-Type: "application/json"
         body_format: json
-        body:
-          short_description: "(Incident Created)"
-          description: "sample incident"
-          impact: "2"
-          urgency: "2"
+        body: "{{ request_body | from_yaml }}"
         status_code: [200, 201]
-      
- 
+      register: response
+
+    - name: Show Created Ticket Details
+      debug:
+        msg: "{{ response.json }}"
