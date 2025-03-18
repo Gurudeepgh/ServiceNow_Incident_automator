@@ -4,19 +4,19 @@
   gather_facts: yes
  
   vars:
-    sys_id2: "107d22668310a210d081f696feaad302"
-    service_now:
-      instance: "dev247928.service-now.com"
-      username: "admin"
-      password: "%ml4Vs9RXE/s"
-      incident_table: "incident"
+    sys_id2: ""
+    instance: "dev247928.service-now.com"
+    username: "admin"
+    password: "%ml4Vs9RXE/s"
+    incident_table: "incident"
+      
  
  
   tasks:
     
     - name: update incident
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}/{{ sys_id2 }}"
+        url: "https://{{ instance }}/api/now/table/{{ incident_table }}/{{ sys_id2 }}"
         method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
@@ -26,7 +26,8 @@
         body_format: json
         body:
           state: "resolved"
-          short_description: "(Incident update)"
+          short_description: "Incident update"
+          description: "incident updated description"
         status_code: [200, 201]
       
  
