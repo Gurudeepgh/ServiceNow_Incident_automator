@@ -1,5 +1,5 @@
 ---
-- name: incident creator
+- name: incident updater
   hosts: localhost
   gather_facts: yes
  
