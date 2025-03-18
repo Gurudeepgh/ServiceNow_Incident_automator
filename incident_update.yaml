@@ -18,8 +18,8 @@
       ansible.builtin.uri:
         url: "https://{{ instance }}/api/now/table/{{ incident_table }}/{{ sys_id2 }}"
         method: PATCH
-        user: "{{ service_now.username }}"
-        password: "{{ service_now.password }}"
+        user: "{{ username }}"
+        password: "{{ password }}"
         force_basic_auth: yes
         headers:
           Content-Type: "application/json"
