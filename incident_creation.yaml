@@ -56,7 +56,7 @@
 
     - name: Create Incident or Request in ServiceNow
       ansible.builtin.uri:
-        url: "https://{{ instance }}/api/now/table/{{ table_name }}"
+        url: "https://{{ instance }}/api/now/table/{{ table_name }}?sysparm_suppress_auto_sys_field=true"
         method: POST
         user: "{{ username }}"
         password: "{{ password }}"
