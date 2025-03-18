@@ -1,5 +1,5 @@
 ---
-- name: ServiceNow Ticket Updater
+- name: Update ServiceNow Incident or Request
   hosts: localhost
   gather_facts: no
 
@@ -7,45 +7,42 @@
     instance: "dev247928.service-now.com"
     username: "admin"
     password: "%ml4Vs9RXE/s"
-    incident_table: "incident"
-    request_table: "sc_request"
 
-    # Ticket details for update
-    ticket_type: ""   
-    sys_id: ""  
-    short_description: ""
-    description: ""
-    impact: "2"     
-    urgency: "2"    
-    state: ""  
-
+    # JSON input for update
+    input_json: 
+      ticket_type: "incident"  # Change to "request" for request updates
+      sys_id: "abcd1234efgh5678"
+      short_description: "Updated Ticket Description"
+      description: "Updated ticket details."
+      priority: "3"
+      impact: "2"
+      urgency: "2"
+      state: "2"  # 1 = New, 2 = In Progress, etc.
+      assigned_to: "admin"
+      assignment_group: "IT Support"
+      comments: "Ticket is being worked on."
+      work_notes: "Engineer started troubleshooting."
+      due_date: "2025-03-20"
+      escalation: "1"
+      request_state: "approved"
+      stage: "fulfilling"
+      approval: "approved"
+      category: "network"
+      service_offering: "IT Helpdesk"
+      contact_type: "email"
+  
   tasks:
-    - name: Set table name based on ticket type
+    - name: Determine table based on ticket_type
       set_fact:
-        table_name: "{{ incident_table if ticket_type == 'incident' else request_table }}"
+        table_name: "{{ 'incident' if input_json.ticket_type == 'incident' else 'sc_request' }}"
 
     - name: Prepare request body for update
       set_fact:
-        request_body: >-
-          {%- if ticket_type == 'incident' -%}
-          {
-            "short_description": "{{ short_description }}",
-            "description": "{{ description }}",
-            "impact": "{{ impact }}",
-            "urgency": "{{ urgency }}",
-            "state": "{{ state }}"
-          }
-          {%- else -%}
-          {
-            "short_description": "{{ short_description }}",
-            "description": "{{ description }}",
-            "state": "{{ state }}"
-          }
-          {%- endif -%}
+        request_body: "{{ input_json | to_json }}"
 
-    - name: Update Ticket in ServiceNow
+    - name: Update Incident or Request in ServiceNow
       ansible.builtin.uri:
-        url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ sys_id }}"
+        url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ input_json.sys_id }}"
         method: PATCH
         user: "{{ username }}"
         password: "{{ password }}"
@@ -53,7 +50,7 @@
         headers:
           Content-Type: "application/json"
         body_format: json
-        body: "{{ request_body | from_yaml }}"
+        body: "{{ request_body }}"
         status_code: [200, 204]
       register: response
 
