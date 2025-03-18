@@ -1,22 +1,51 @@
 ---
-- name: incident updater
+- name: ServiceNow Ticket Updater
   hosts: localhost
-  gather_facts: yes
- 
+  gather_facts: no
+
   vars:
-    sys_id2: ""
     instance: "dev247928.service-now.com"
     username: "admin"
     password: "%ml4Vs9RXE/s"
     incident_table: "incident"
-      
- 
- 
+    request_table: "sc_request"
+
+    # Ticket details for update
+    ticket_type: ""   
+    sys_id: ""  
+    short_description: ""
+    description: ""
+    impact: "2"     
+    urgency: "2"    
+    state: ""  
+
   tasks:
-    
-    - name: update incident
+    - name: Set table name based on ticket type
+      set_fact:
+        table_name: "{{ incident_table if ticket_type == 'incident' else request_table }}"
+
+    - name: Prepare request body for update
+      set_fact:
+        request_body: >-
+          {%- if ticket_type == 'incident' -%}
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}",
+            "impact": "{{ impact }}",
+            "urgency": "{{ urgency }}",
+            "state": "{{ state }}"
+          }
+          {%- else -%}
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}",
+            "state": "{{ state }}"
+          }
+          {%- endif -%}
+
+    - name: Update Ticket in ServiceNow
       ansible.builtin.uri:
-        url: "https://{{ instance }}/api/now/table/{{ incident_table }}/{{ sys_id2 }}"
+        url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ sys_id }}"
         method: PATCH
         user: "{{ username }}"
         password: "{{ password }}"
@@ -24,10 +53,10 @@
         headers:
           Content-Type: "application/json"
         body_format: json
-        body:
-          state: "resolved"
-          short_description: "Incident update"
-          description: "incident updated description"
-        status_code: [200, 201]
-      
- 
+        body: "{{ request_body | from_yaml }}"
+        status_code: [200, 204]
+      register: response
+
+    - name: Show Updated Ticket Details
+      debug:
+        msg: "{{ response.json }}"
