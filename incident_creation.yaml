@@ -4,22 +4,20 @@
   gather_facts: yes
  
   vars:
-    sys_id2: ""
-    service_now:
-      instance: "dev247928.service-now.com"
-      username: "admin"
-      password: "%ml4Vs9RXE/s"
-      incident_table: "incident"
+    instance: "dev247928.service-now.com"
+    username: "admin"
+    password: "%ml4Vs9RXE/s"
+    incident_table: "incident"
  
  
   tasks:
     
     - name: Create incident 
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}"
+        url: "https://{{ instance }}/api/now/table/{{ incident_table }}"
         method: POST
-        user: "{{ service_now.username }}"
-        password: "{{ service_now.password }}"
+        user: "{{ username }}"
+        password: "{{ password }}"
         force_basic_auth: yes
         headers:
           Content-Type: "application/json"
