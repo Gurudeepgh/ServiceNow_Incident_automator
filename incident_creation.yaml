@@ -42,10 +42,8 @@
             "impact": "{{ impact }}",
             "urgency": "{{ urgency }}",
             "priority": "{{ priority }}",
-            "assigned_to": "{{ assigned_to }}",
-            "assignment_group": "{{ assignment_group }}",
             "comments": "{{ comments }}",
-            "work_notes": "{{ work_notes }}",
+            "work_notes": "{{ work_notes }}"
           }
           {%- else -%}
           {
