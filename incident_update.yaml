@@ -8,41 +8,60 @@
     username: "admin"
     password: "%ml4Vs9RXE/s"
 
-    # JSON input for update
-    input_json: 
-      ticket_type: "incident"  # Change to "request" for request updates
-      sys_id: "abcd1234efgh5678"
-      short_description: "Updated Ticket Description"
-      description: "Updated ticket details."
-      priority: "3"
-      impact: "2"
-      urgency: "2"
-      state: "2"  # 1 = New, 2 = In Progress, etc.
-      assigned_to: "admin"
-      assignment_group: "IT Support"
-      comments: "Ticket is being worked on."
-      work_notes: "Engineer started troubleshooting."
-      due_date: "2025-03-20"
-      escalation: "1"
-      request_state: "approved"
-      stage: "fulfilling"
-      approval: "approved"
-      category: "network"
-      service_offering: "IT Helpdesk"
-      contact_type: "email"
-  
+    # User inputs
+    ticket_type: "incident"  # Change to "request" for updating a request
+    sys_id: "abcd1234efgh5678"  # Provide the existing ticket sys_id
+    short_description: "Updated Ticket Description"
+    description: "Updated ticket details."
+    priority: "3"
+    impact: "2"
+    urgency: "2"
+    state: "2"  # 1 = New, 2 = In Progress, etc.
+    assigned_to: "admin"
+    assignment_group: "IT Support"
+    comments: "Ticket is being worked on."
+    work_notes: "Engineer started troubleshooting."
+    due_date: "2025-03-20"
+    escalation: "1"
+    request_state: "approved"
+    stage: "fulfilling"
+    approval: "approved"
+    category: "network"
+    service_offering: "IT Helpdesk"
+    contact_type: "email"
+
   tasks:
     - name: Determine table based on ticket_type
       set_fact:
-        table_name: "{{ 'incident' if input_json.ticket_type == 'incident' else 'sc_request' }}"
+        table_name: "{{ 'incident' if ticket_type == 'incident' else 'sc_request' }}"
 
     - name: Prepare request body for update
       set_fact:
-        request_body: "{{ input_json | to_json }}"
+        request_body: >
+          {
+            "short_description": "{{ short_description }}",
+            "description": "{{ description }}",
+            "priority": "{{ priority }}",
+            "impact": "{{ impact }}",
+            "urgency": "{{ urgency }}",
+            "state": "{{ state }}",
+            "assigned_to": "{{ assigned_to }}",
+            "assignment_group": "{{ assignment_group }}",
+            "comments": "{{ comments }}",
+            "work_notes": "{{ work_notes }}",
+            "due_date": "{{ due_date }}",
+            "escalation": "{{ escalation }}",
+            "request_state": "{{ request_state }}",
+            "stage": "{{ stage }}",
+            "approval": "{{ approval }}",
+            "category": "{{ category }}",
+            "service_offering": "{{ service_offering }}",
+            "contact_type": "{{ contact_type }}"
+          }
 
     - name: Update Incident or Request in ServiceNow
       ansible.builtin.uri:
-        url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ input_json.sys_id }}"
+        url: "https://{{ instance }}/api/now/table/{{ table_name }}/{{ sys_id }}"
         method: PATCH
         user: "{{ username }}"
         password: "{{ password }}"
