@@ -46,7 +46,7 @@
             "urgency": "{{ urgency }}",
             "priority": "{{ priority }}",
             "comments": "{{ comments }}",
-            "work_notes": "{{ work_notes }}"
+            "work_notes": "{{ work_notes }}",
             "state": "{{ state }}"
           }
           {%- else -%}
