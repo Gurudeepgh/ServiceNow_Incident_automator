@@ -4,7 +4,7 @@
   gather_facts: yes
  
   vars:
-    sys_id2: ""
+    sys_id2: "107d22668310a210d081f696feaad302"
     service_now:
       instance: "dev247928.service-now.com"
       username: "admin"
@@ -14,10 +14,28 @@
  
   tasks:
     
-    - name: Create incident 
+    # - name: Create incident 
+    #   ansible.builtin.uri:
+    #     url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}"
+    #     method: POST
+    #     user: "{{ service_now.username }}"
+    #     password: "{{ service_now.password }}"
+    #     force_basic_auth: yes
+    #     headers:
+    #       Content-Type: "application/json"
+    #     body_format: json
+    #     body:
+    #       short_description: "(Incident Created)"
+    #       description: "sample incident"
+    #       impact: "2"
+    #       urgency: "2"
+    #     status_code: [200, 201]
+
+  
+    - name: update incident
       ansible.builtin.uri:
-        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}"
-        method: POST
+        url: "https://{{ service_now.instance }}/api/now/table/{{ service_now.incident_table }}/{{ sys_id2 }}"
+        method: PATCH
         user: "{{ service_now.username }}"
         password: "{{ service_now.password }}"
         force_basic_auth: yes
@@ -25,10 +43,8 @@
           Content-Type: "application/json"
         body_format: json
         body:
-          short_description: "(Incident Created)"
-          description: "sample incident"
-          impact: "2"
-          urgency: "2"
+          state: "resolved"
+          short_description: "(Incident update)"
         status_code: [200, 201]
       
  
