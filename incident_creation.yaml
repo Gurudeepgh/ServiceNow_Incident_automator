@@ -11,11 +11,12 @@
     request_table: "sc_request"
 
     # Ticket details
-    ticket_type: "incident"   # Change to "request" for a request
-    short_description: "Server down issue"
-    description: "The production server is down, needs immediate attention."
-    impact: "1"     # Only for incidents (1-High, 2-Medium, 3-Low)
-    urgency: "1"    # Only for incidents (1-High, 2-Medium, 3-Low)
+    ticket_type: ""   
+    short_description: ""
+    description: ""
+    assigned_to: ""
+    impact: "2"
+    urgency: "2"    # Only for incidents (1-High, 2-Medium, 3-Low)
 
   tasks:
     - name: Set table name based on ticket type
@@ -31,6 +32,7 @@
             "description": "{{ description }}",
             "impact": "{{ impact }}",
             "urgency": "{{ urgency }}"
+            "assigned_to": "{{ assigned_to }}"
           }
           {%- else -%}
           {
