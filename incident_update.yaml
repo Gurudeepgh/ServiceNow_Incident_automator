@@ -10,7 +10,7 @@
 
     # User inputs
     ticket_type: "incident"  # Change to "request" for updating a request
-    sys_id: "abcd1234efgh5678"  # Provide the existing ticket sys_id
+    sys_id: "107d22668310a210d081f696feaad302"  # Provide the existing ticket sys_id
     short_description: "Updated Ticket Description"
     description: "Updated ticket details."
     priority: "3"
