@@ -79,8 +79,7 @@ def main():
     "targets": ["64.233.180.138"],
     "service_now": {
         "instance": "dev262979.service-now.com",
-        "username": "elt_agent",
-        "password": "o@.CSQwgo^z6W!s6",
+
         "table": "incident",
         "impact": "3",
         "urgency": "3",
